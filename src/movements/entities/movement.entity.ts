@@ -1,4 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { AccountingAccount } from '../../accounting-accounts/entities/accounting-account.entity';
+import { Segment } from '../../segments/entities/segment.entity';
 
 @Entity('movements')
 export class Movement {
@@ -10,6 +18,15 @@ export class Movement {
 
   @Column({ name: 'accounting_account_id' })
   accountingAccountId: number;
+
+  // Relaciones TypeORM
+  @ManyToOne(() => Segment, { eager: false })
+  @JoinColumn({ name: 'segment_id' })
+  segment: Segment;
+
+  @ManyToOne(() => AccountingAccount, { eager: false })
+  @JoinColumn({ name: 'accounting_account_id' })
+  accountingAccount: AccountingAccount;
 
   @Column({ type: 'date' })
   date: Date;

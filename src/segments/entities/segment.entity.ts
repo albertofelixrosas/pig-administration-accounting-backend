@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Movement } from '../../movements/entities/movement.entity';
 
 @Entity('segments')
 export class Segment {
@@ -10,4 +11,8 @@ export class Segment {
 
   @Column()
   name: string;
+
+  // Relación inversa con Movement
+  @OneToMany(() => Movement, (movement) => movement.segment)
+  movements: Movement[];
 }

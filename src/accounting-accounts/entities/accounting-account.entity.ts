@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Movement } from '../../movements/entities/movement.entity';
 
 @Entity('accounting_accounts')
 export class AccountingAccount {
@@ -10,4 +11,8 @@ export class AccountingAccount {
 
   @Column()
   name: string;
+
+  // Relación inversa con Movement
+  @OneToMany(() => Movement, (movement) => movement.accountingAccount)
+  movements: Movement[];
 }
