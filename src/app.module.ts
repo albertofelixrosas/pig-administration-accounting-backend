@@ -4,6 +4,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { PigController } from './controllers/pig.controller';
+import { ContpaqExcelModule } from './contpaq-excel/contpaq-excel.module';
+import { AccountingAccountsModule } from './accounting-accounts/accounting-accounts.module';
+import { SegmentsModule } from './segments/segments.module';
+import { MovementsModule } from './movements/movements.module';
+import { ConceptsModule } from './concepts/concepts.module';
 
 @Module({
   imports: [
@@ -12,6 +17,11 @@ import { PigController } from './controllers/pig.controller';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
     DatabaseModule,
+    ContpaqExcelModule,
+    AccountingAccountsModule,
+    SegmentsModule,
+    MovementsModule,
+    ConceptsModule,
   ],
   controllers: [AppController, PigController],
   providers: [AppService],
