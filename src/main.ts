@@ -40,11 +40,6 @@ async function bootstrap() {
         'API para el sistema de administración y contabilidad porcina',
       )
       .setVersion('1.0')
-      .addTag('general', 'Endpoints generales de la aplicación')
-      .addTag('auth', 'Autenticación y autorización')
-      .addTag('pigs', 'Gestión de cerdos')
-      .addTag('farms', 'Gestión de granjas')
-      .addTag('accounting', 'Módulo de contabilidad')
       .addBearerAuth(
         {
           type: 'http',

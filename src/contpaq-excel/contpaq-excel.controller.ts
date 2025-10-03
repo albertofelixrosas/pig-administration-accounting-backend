@@ -2,21 +2,22 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
-  Get,
   InternalServerErrorException,
-  Param,
-  Patch,
   Post,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { ContpaqExcelService } from './contpaq-excel.service';
-import { CreateContpaqExcelDto } from './dto/create-contpaq-excel.dto';
-import { UpdateContpaqExcelDto } from './dto/update-contpaq-excel.dto';
+import { LoadMovementsDto } from './dto/load-movements.dto';
 
 @Controller('contpaq-excel')
 @ApiTags('ContPAQ Excel')
@@ -114,31 +115,50 @@ export class ContpaqExcelController {
     }
   }
 
-  @Post()
-  create(@Body() createContpaqExcelDto: CreateContpaqExcelDto) {
-    return this.contpaqExcelService.create(createContpaqExcelDto);
-  }
+  @Post('load-movements')
+  @ApiOperation({
+    summary: 'Cargar todos los datos de movimientos desde archivo ContPAQ',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Datos de movimientos cargados exitosamente',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        statusCode: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Error cargando datos de movimientos',
+  })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+  async loadMovements(@Body() loadMovementsDto: LoadMovementsDto) {
+    try {
+      console.log('Cargando movimientos desde:', loadMovementsDto.filePath);
 
-  @Get()
-  findAll() {
-    return this.contpaqExcelService.findAll();
-  }
+      await this.contpaqExcelService.loadAllMovementDataByFilename(
+        loadMovementsDto.filePath,
+      );
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.contpaqExcelService.findOne(+id);
-  }
+      return {
+        message: 'Datos de movimientos procesados exitosamente',
+        statusCode: 200,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateContpaqExcelDto: UpdateContpaqExcelDto,
-  ) {
-    return this.contpaqExcelService.update(+id, updateContpaqExcelDto);
-  }
+      console.error('Error cargando movimientos:', error);
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.contpaqExcelService.remove(+id);
+      throw new InternalServerErrorException(
+        error instanceof Error
+          ? error.message
+          : 'Error desconocido al cargar los movimientos',
+      );
+    }
   }
 }
