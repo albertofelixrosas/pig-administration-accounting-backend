@@ -1,14 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AccountingAccountsModule } from './accounting-accounts/accounting-accounts.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DatabaseModule } from './database/database.module';
-import { PigController } from './controllers/pig.controller';
-import { ContpaqExcelModule } from './contpaq-excel/contpaq-excel.module';
-import { AccountingAccountsModule } from './accounting-accounts/accounting-accounts.module';
-import { SegmentsModule } from './segments/segments.module';
-import { MovementsModule } from './movements/movements.module';
 import { ConceptsModule } from './concepts/concepts.module';
+import { ContpaqExcelModule } from './contpaq-excel/contpaq-excel.module';
+import { DatabaseModule } from './database/database.module';
+import { MovementsModule } from './movements/movements.module';
+import { SegmentsModule } from './segments/segments.module';
 
 @Module({
   imports: [
@@ -23,7 +22,7 @@ import { ConceptsModule } from './concepts/concepts.module';
     MovementsModule,
     ConceptsModule,
   ],
-  controllers: [AppController, PigController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

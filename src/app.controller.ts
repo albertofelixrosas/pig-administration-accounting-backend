@@ -1,7 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
-import { HealthCheckDto, WelcomeResponseDto } from './dto/common.dto';
 
 @ApiTags('general')
 @Controller()
@@ -16,35 +15,12 @@ export class AppController {
   @ApiResponse({
     status: 200,
     description: 'Mensaje de bienvenida exitoso',
-    type: WelcomeResponseDto,
+    type: String,
   })
-  getHello(): WelcomeResponseDto {
+  getHello() {
     // 🐛 DEBUG POINT: Put a breakpoint here to debug this endpoint
     const message = this.appService.getHello();
     console.log('Debug: Getting hello message:', message);
-    return { message };
-  }
-
-  @Get('health')
-  @ApiOperation({
-    summary: 'Health Check',
-    description:
-      'Verifica el estado de la aplicación y conexión a base de datos',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Estado de la aplicación',
-    type: HealthCheckDto,
-  })
-  getHealth(): HealthCheckDto {
-    return {
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      database: {
-        connected: true,
-        database:
-          process.env.DB_DATABASE || 'pig_administration_accounting_dev',
-      },
-    };
+    return message;
   }
 }
