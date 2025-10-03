@@ -1,16 +1,15 @@
 # Pig Administration Accounting Backend
 
-Backend application for pig administration and accounting system built with NestJS, TypeORM, and PostgreSQL.
+Backend application for pig administration and accounting system built with NestJS, TypeORM, and SQLite.
 
 ## Description
 
-This is a NestJS-based backend application designed to handle pig administration and accounting operations with a PostgreSQL database.
+This is a NestJS-based backend application designed to handle pig administration and accounting operations with a SQLite database for simplified development and deployment.
 
 ## Prerequisites
 
 - Node.js (v16 or higher)
-- PostgreSQL 16
-- Docker & Docker Compose (optional, for local development)
+- No additional database installation required (SQLite included)
 
 ## Installation
 
@@ -20,25 +19,14 @@ npm install
 
 ## Database Setup
 
-### Option 1: Using Docker Compose (Recommended for development)
+### Automatic SQLite Setup
 
-```bash
-# Start PostgreSQL and pgAdmin containers
-docker-compose up -d
+The application uses SQLite for simplified development and deployment. No manual database setup is required:
 
-# The database will be available at:
-# - PostgreSQL: localhost:5432
-# - pgAdmin: http://localhost:8080 (admin@admin.com / admin)
-```
-
-### Option 2: Manual PostgreSQL installation
-
-1. Install PostgreSQL 16
-2. Create databases:
-   ```sql
-   CREATE DATABASE pig_administration_accounting_dev;
-   CREATE DATABASE pig_administration_accounting_prod;
-   ```
+- **Development**: Creates `database_dev.sqlite` automatically
+- **Production**: Creates `database.sqlite` automatically
+- **Auto-sync**: Database schema synchronization enabled
+- **Portable**: Single file database, easy to backup and move
 
 ## Environment Configuration
 
@@ -52,13 +40,14 @@ docker-compose up -d
    cp .env.production .env
    ```
 
-2. Update the `.env` file with your database credentials:
+2. The `.env` file only needs the database filename (already configured):
+
    ```env
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_USERNAME=postgres
-   DB_PASSWORD=your_password
-   DB_DATABASE=pig_administration_accounting_dev
+   # Development
+   DB_DATABASE=database_dev.sqlite
+
+   # Production
+   DB_DATABASE=database.sqlite
    ```
 
 ## Running the app
@@ -101,8 +90,11 @@ src/
 ├── app.module.ts           # Root module with database configuration
 ├── app.service.ts          # Main application service
 └── main.ts                 # Application entry point
-database/
-└── init.sql                # Database initialization script
+├── concepts/                # Concepts CRUD module
+├── accounting-accounts/     # Accounting accounts module
+├── segments/               # Segments module
+├── movements/              # Movements module
+└── contpaq-excel/          # Excel file processing module
 ```
 
 ## Environment Files
@@ -113,11 +105,12 @@ database/
 
 ## Database Features
 
+- **SQLite Integration**: Lightweight, file-based database
 - **TypeORM Integration**: Full ORM support with decorators
-- **PostgreSQL 16**: Latest stable version with advanced features
-- **Auto-sync**: Database schema synchronization in development
-- **Migrations**: Production-ready database versioning (to be implemented)
-- **Connection Pooling**: Optimized database connections
+- **Auto-sync**: Database schema synchronization enabled
+- **Portable**: Single file database, easy backup and deployment
+- **Zero Configuration**: No server setup required
+- **CRUD Operations**: Complete Create, Read, Update, Delete functionality
 
 ## API Documentation
 
@@ -144,7 +137,19 @@ La aplicación incluye documentación interactiva de la API usando Swagger UI co
 - `GET /` - Mensaje de bienvenida
 - `GET /health` - Health check con estado de la aplicación
 
-#### Pigs (Gestión de Cerdos)
+#### Concepts (Conceptos Contables)
+
+- `GET /concepts` - Lista todos los conceptos ordenados alfabéticamente
+- `GET /concepts/:id` - Obtener concepto por ID
+- `POST /concepts` - Crear nuevo concepto
+- `PATCH /concepts/:id` - Actualizar concepto
+- `DELETE /concepts/:id` - Eliminar concepto
+
+#### ContPAQ Excel (Procesamiento de Archivos)
+
+- `POST /contpaq-excel/upload` - Cargar y procesar archivo Excel
+
+#### Pigs (Gestión de Cerdos) - Ejemplo
 
 - `GET /pigs` - Lista paginada de cerdos con filtros
 - `GET /pigs/:id` - Obtener cerdo por ID
@@ -164,41 +169,38 @@ SWAGGER_PATH=api        # Ruta donde se sirve la documentación
 ## Technologies Used
 
 - **Backend**: NestJS, TypeScript
-- **Database**: PostgreSQL 16, TypeORM
+- **Database**: SQLite, TypeORM
+- **File Processing**: ExcelJS, Multer
 - **API Documentation**: Swagger/OpenAPI 3.0 con tema "One Dark"
 - **Theme**: swagger-themes (One Dark theme)
+- **Validation**: class-validator, class-transformer
 - **Configuration**: @nestjs/config with environment variables
-- **Development**: Docker Compose, pgAdmin
 - **Testing**: Jest
 - **Code Quality**: ESLint, Prettier
 
 ## Development Workflow
 
-### Inicio Rápido (Solo API con Swagger)
+### Inicio Rápido
 
-1. Install dependencies: `npm install`
-2. Set up environment: `cp .env.development .env` (Windows: `copy .env.development .env`)
-3. Start development server: `npm run start:dev`
-4. Open Swagger documentation: http://localhost:3000/api
+1. **Install dependencies**: `npm install`
+2. **Set up environment**: `cp .env.development .env` (Windows: `copy .env.development .env`)
+3. **Start development server**: `npm run start:dev`
+4. **Open Swagger documentation**: http://localhost:3000/api
 
-### Con Base de Datos Completa
+¡Eso es todo! La base de datos SQLite se crea automáticamente.
 
-1. Start the database: `docker-compose up -d` o instalar PostgreSQL manualmente
-2. Run database setup script: `scripts/setup-database.bat` (Windows) o `scripts/setup-database.sh` (Linux/Mac)
-3. Uncomment database configuration in `src/database/database.module.ts`
-4. Install dependencies: `npm install`
-5. Set up environment: Update `.env` with your database credentials
-6. Start development server: `npm run start:dev`
-7. Access pgAdmin at http://localhost:8080 for database management
-8. Open Swagger documentation: http://localhost:3000/api
+### Funcionalidades Disponibles
+
+1. **Swagger API**: http://localhost:3000/api - Documentación interactiva con tema oscuro
+2. **CRUD de Conceptos**: Completamente funcional desde Swagger
+3. **Carga de Excel**: Endpoint para procesar archivos Excel de ContPAQ
+4. **Base de datos**: SQLite con todas las tablas creadas automáticamente
 
 ### Useful Commands
 
 ```bash
 # Database management
-npm run db:start    # Start PostgreSQL container
-npm run db:stop     # Stop PostgreSQL container
-npm run db:reset    # Reset database (remove all data)
+npm run db:reset    # Reset SQLite database (remove database file)
 
 # Development
 npm run start:dev   # Start with hot reload

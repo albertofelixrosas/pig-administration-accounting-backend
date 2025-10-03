@@ -31,7 +31,7 @@ export class Movement {
   @Column({ type: 'date' })
   date: Date;
 
-  @Column({ type: 'enum', enum: ['Egresos', 'Ingresos'] })
+  @Column({ type: 'varchar', length: 20 })
   type: 'Egresos' | 'Ingresos';
 
   @Column()
@@ -46,6 +46,6 @@ export class Movement {
   @Column()
   reference: string;
 
-  @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   charge: number | null;
 }

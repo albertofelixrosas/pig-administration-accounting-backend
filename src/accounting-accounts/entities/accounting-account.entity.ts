@@ -7,7 +7,7 @@ export class AccountingAccount {
   accountingAccountId: number;
 
   @Column({ name: 'account_code' })
-  acountCode: string;
+  accountCode: string;
 
   @Column()
   name: string;
