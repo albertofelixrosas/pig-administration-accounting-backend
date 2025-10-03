@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
+import { AccountingAccountsService } from '../accounting-accounts/accounting-accounts.service';
 import { CreateMovementDto } from '../movements/dto/create-movement.dto';
 import { MovementsService } from '../movements/movements.service';
+import { SegmentsService } from '../segments/segments.service';
 
 // Expresiones regulares para validaciones
 const acountNumberRegex = /^\d{3}-\d{3}-\d{3}-\d{3}-\d{2}$/;
@@ -36,7 +38,11 @@ function convertToISODate(date: string): string {
 
 @Injectable()
 export class ContpaqExcelService {
-  constructor(private readonly movementsService: MovementsService) {}
+  constructor(
+    private readonly movementsService: MovementsService,
+    private readonly accountingAccountsService: AccountingAccountsService,
+    private readonly segmentsService: SegmentsService,
+  ) {}
   /**
    * Procesa un archivo Excel de ContPAQ y extrae los datos
    * @param filePath Ruta del archivo Excel a procesar
@@ -92,10 +98,6 @@ export class ContpaqExcelService {
         console.log(
           `Registros procesados en hoja "${worksheet.name}": ${rows.length}`,
         );
-
-        // Aquí puedes agregar la lógica específica para procesar los datos
-        // Por ejemplo, guardar en base de datos, validar datos, etc.
-        this.processWorksheetData(worksheet.name, rows);
       });
 
       // Eliminar el archivo temporal después del procesamiento
@@ -142,28 +144,21 @@ export class ContpaqExcelService {
 
       const rows = sheet.getSheetValues(); // matriz [fila][columna]
 
-      // 1️⃣ Buscar la razón social de la empresa
-      const companyName = String(rows[1]?.[4] || '').trim();
-
-      if (!companyName) {
+      // 1️⃣ Verificar que hay datos en el archivo
+      if (!rows || rows.length < 2) {
         throw new BadRequestException(
-          'No se encontró la razón social en el documento',
+          'El archivo no contiene suficientes datos para procesar',
         );
       }
 
-      console.log(`Empresa encontrada: ${companyName}`);
+      console.log(`Procesando archivo Excel con ${rows.length} filas`);
 
-      // Buscar la razón social en la base de datos para obtener su id
+      // Variables para mantener el estado actual durante el procesamiento
+      let currentAccountId = 0;
+      let currentAccountName = '';
+      let currentSegmentId = 0;
+
       try {
-        // TODO: Implementar cuando se tenga el servicio de empresas
-        // const company = await this.companiesService.findOrCreateByCompanyName(companyName);
-        const company = { company_id: 1 }; // Mock temporal
-
-        // 2️⃣ Buscar las cuentas contables
-        let currentAccountId = 0;
-        let currentAccountName = '';
-        let currentSegmentId = 0;
-
         for (let i = 1; i < rows.length; i++) {
           const currentRow = rows[i];
           const currentFirstColumn = String(rows[i]?.[1] || '').trim();
@@ -174,20 +169,31 @@ export class ContpaqExcelService {
           if (currentFirstColumn.match(acountNumberRegex)) {
             const accountName = String(rows[i]?.[2] || '').trim();
             currentAccountName = accountName;
-            const companyId = company.company_id;
 
             console.log(
               `Procesando cuenta: ${currentFirstColumn} - ${accountName}`,
             );
 
-            // TODO: Implementar cuando se tenga el servicio de cuentas
-            // const account = await this.accountsService.findOrCreateByCodeAndName(
-            //   companyId,
-            //   currentFirstColumn,
-            //   accountName,
-            // );
-            // currentAccountId = account.accounting_account_id;
-            currentAccountId = 1; // Mock temporal
+            // Buscar o crear la cuenta contable
+            try {
+              const account =
+                await this.accountingAccountsService.findOrCreateByCodeAndName(
+                  currentFirstColumn,
+                  accountName,
+                );
+              currentAccountId = account.accountingAccountId;
+              console.log(
+                `Cuenta contable encontrada/creada con ID: ${currentAccountId}`,
+              );
+            } catch (error) {
+              console.error(
+                `Error procesando cuenta ${currentFirstColumn}:`,
+                error,
+              );
+              throw new BadRequestException(
+                `Error procesando cuenta contable: ${currentFirstColumn}`,
+              );
+            }
           }
 
           // 2. Segmento
@@ -200,13 +206,22 @@ export class ContpaqExcelService {
 
             console.log(`Procesando segmento: ${segmentCode}`);
 
-            // TODO: Implementar cuando se tenga el servicio de segmentos
-            // const segment = await this.segmentsService.findOrCreateByCode(
-            //   company.company_id,
-            //   segmentCode,
-            // );
-            // currentSegmentId = segment.segment_id;
-            currentSegmentId = 1; // Mock temporal
+            // Buscar o crear el segmento
+            try {
+              const segment = await this.segmentsService.findOrCreateByCode(
+                segmentCode,
+                `Segmento ${segmentCode}`,
+              );
+              currentSegmentId = segment.segmentId;
+              console.log(
+                `Segmento encontrado/creado con ID: ${currentSegmentId}`,
+              );
+            } catch (error) {
+              console.error(`Error procesando segmento ${segmentCode}:`, error);
+              throw new BadRequestException(
+                `Error procesando segmento: ${segmentCode}`,
+              );
+            }
           }
 
           // 3. Movimiento
@@ -241,7 +256,7 @@ export class ContpaqExcelService {
           }
         }
 
-        console.log(`Procesamiento completado para empresa: ${companyName}`);
+        console.log('Procesamiento de movimientos completado exitosamente');
       } catch (error) {
         if (error instanceof Error) {
           console.error('Error procesando movimientos:', error.message);
@@ -256,27 +271,5 @@ export class ContpaqExcelService {
         `Error cargando datos de movimientos: ${error instanceof Error ? error.message : 'Error desconocido'}`,
       );
     }
-  }
-
-  /**
-   * Procesa los datos de una hoja específica
-   * @param worksheetName Nombre de la hoja
-   * @param rows Filas de datos
-   */
-  private processWorksheetData(worksheetName: string, rows: any[]): void {
-    console.log(`Procesando datos de la hoja: ${worksheetName}`);
-    console.log(`Total de filas con datos: ${rows.length}`);
-
-    // Aquí puedes implementar la lógica específica según el tipo de hoja
-    // Por ejemplo:
-    // - Si es "Movimientos", procesar como movimientos contables
-    // - Si es "Cuentas", procesar como catálogo de cuentas
-    // - etc.
-
-    rows.forEach((row, index) => {
-      console.log(`Fila ${index + 1}:`, row);
-      // Aquí implementarías la lógica de procesamiento específica
-      // Por ejemplo: validación, transformación, guardado en BD
-    });
   }
 }
