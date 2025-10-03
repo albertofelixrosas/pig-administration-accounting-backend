@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
-// import { TypeOrmModule } from '@nestjs/typeorm';
-// import { ConfigModule } from '@nestjs/config';
-// import { DatabaseConfigService } from '../config/database.config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Concept } from '../concepts/entities/concept.entity';
 
 @Module({
-  // Comentado temporalmente para demostración de Swagger
-  // imports: [
-  //   TypeOrmModule.forRootAsync({
-  //     imports: [ConfigModule],
-  //     useClass: DatabaseConfigService,
-  //   }),
-  // ],
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      database: 'database.sqlite',
+      entities: [Concept], // Solo Concept por ahora para demostración
+      synchronize: true, // Solo para desarrollo
+      logging: true, // Activar logging para ver las consultas
+    }),
+  ],
 })
 export class DatabaseModule {}
