@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
+import { CreateMovementDto } from '../movements/dto/create-movement.dto';
+import { MovementsService } from '../movements/movements.service';
 
 // Expresiones regulares para validaciones
 const acountNumberRegex = /^\d{3}-\d{3}-\d{3}-\d{3}-\d{2}$/;
@@ -32,20 +34,9 @@ function convertToISODate(date: string): string {
   return result;
 }
 
-// Interfaces temporales (hasta que se definan los servicios reales)
-interface CreateMovementDto {
-  segment_id: number;
-  accounting_account_id: number;
-  date: string; // ISO date string format (YYYY-MM-DD)
-  number: number;
-  concept: string;
-  charge: number | null;
-  reference: string;
-  supplier: string;
-}
-
 @Injectable()
 export class ContpaqExcelService {
+  constructor(private readonly movementsService: MovementsService) {}
   /**
    * Procesa un archivo Excel de ContPAQ y extrae los datos
    * @param filePath Ruta del archivo Excel a procesar
@@ -233,9 +224,10 @@ export class ContpaqExcelService {
             );
 
             const dto: CreateMovementDto = {
-              segment_id: currentSegmentId,
-              accounting_account_id: currentAccountId,
+              segmentId: currentSegmentId,
+              accountingAccountId: currentAccountId,
               date: convertToISODate(movementDate),
+              type: 'Egresos', // Por defecto, se puede ajustar según la lógica de negocio
               number: parseInt(movementNumber),
               concept: currentAccountName, // valor por defecto, luego cambiará por el usuario
               charge: isNaN(finalChargeValue) ? null : finalChargeValue,
@@ -243,9 +235,9 @@ export class ContpaqExcelService {
               supplier: movementConcept,
             };
 
-            // TODO: Implementar cuando se tenga el servicio de movimientos
-            // await this.movementsService.create(dto);
-            console.log('DTO creado:', dto);
+            // Crear el movimiento en la base de datos
+            const createdMovement = await this.movementsService.create(dto);
+            console.log('Movimiento creado:', createdMovement);
           }
         }
 
